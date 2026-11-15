@@ -1,0 +1,5 @@
+controller,max_speed_m_s,front_boost_max_m_s,completed_laps,total_time_s,best_lap_s,comment
+V1,6.0,,10,851.57,84.89,10 laps completed; no collisions reported
+V2,8.5,,10,781.06,77.64,10 laps completed; no collisions reported
+V2,12.0,,10,780.42,77.82,10 laps completed; no collisions reported
+V3.1 EN,12.0,0.8,10,777.40,77.47,10 laps completed; no collisions reported
