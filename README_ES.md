@@ -238,18 +238,7 @@ El contador (`timing/lap_timer_sepang.py`) registra la posición inicial en su p
 
 Los tiempos de mensajes ROS son generados por ROS 2. El CSV contiene `lap`, `lap_time_s`, `best_lap_s`, `elapsed_time_s`, `lap_distance_m`.
 
-## 8. Resultados medidos y limitaciones
-
-| Controlador | Máximo configurado | Vueltas | Tiempo total | Mejor vuelta |
-|---|---:|---:|---:|---:|
-| V1 | 6.0 m/s | 10/10 | 851.57 s | 84.89 s |
-| V2 | 8.5 m/s | 10/10 | 781.06 s | 77.64 s |
-| V2 | 12.0 m/s | 10/10 | 780.42 s | 77.82 s |
-| **V3.1** | **12.0 m/s** | **10/10** | **777.40 s** | **77.47 s** |
-
-`results/summary.csv` conserva los valores reportados. **Sin colisiones** significa ninguna observada durante esas pruebas, **no** detección automática de choques ni demostración estadística de confiabilidad. El tiempo se mide con un reloj monotónico de ejecución, no necesariamente equivalente al tiempo de simulación. Conviene repetir ensayos independientes antes de realizar comparaciones concluyentes. La velocidad máxima es un tope del comando y puede no alcanzarse por otras restricciones.
-
-## 9. Solución de problemas
+## 8. Solución de problemas
 
 - **`python3: can't open file`** — ejecuta desde la raíz de este repositorio o utiliza la ruta completa dentro de `controllers/` o `timing/`.
 - **Aparece el mapa anterior** — cierra el simulador, vuelve a configurar Sepang, recompila y carga el workspace; comprueba `ros2 param get /bridge map_path`.
@@ -258,7 +247,7 @@ Los tiempos de mensajes ROS son generados por ROS 2. El CSV contiene `lap`, `lap
 - **Error de `f110_gym` o `f110-v0`** — verifica que F1TENTH Gym esté instalado en el entorno Python utilizado por ROS.
 - **Cuenta mal las vueltas** — inicia el cronómetro con el auto detenido en el punto de salida y no teletransportes ni reinicies el simulador a media carrera.
 
-## 10. Fuentes, atribución y alcance
+## 9. Fuentes, atribución y alcance
 
 - Simulación y puente ROS: [F1TENTH Gym](https://github.com/f1tenth/f1tenth_gym), [F1TENTH Gym ROS](https://github.com/f1tenth/f1tenth_gym_ros) y la [guía de entorno ROS 2 Humble](https://github.com/widegonz/F1Tenth-Repository). El código del simulador **no está redistribuido** aquí.
 - Los archivos `Sepang_map` provienen del ZIP `Mapas-F1Tenth-v2.zip` aportado por el autor. **Se debe verificar su licencia/procedencia antes de publicar el repositorio**.
