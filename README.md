@@ -61,6 +61,36 @@ The chosen LiDAR angle is clipped to **±0.4189 rad** (approximately 24°). Subs
 
 **Speed logic:** The controller compares the configured maximum, steering-dependent limit, curve limit and frontal braking limit; the lowest determines its target. It then applies acceleration/deceleration rate limits. The V3.1 corridor boost can only *increase* the V2 frontal limit, by at most `front_boost_max × confidence`, and does not override the other speed limits.
 
+### How does the controller calculate speed?
+
+Inside `scan_callback()`, the controller computes **three independent limits**: `speed_original` reduces speed for larger steering angles, `speed_curve` accounts for the configured lateral acceleration limit, and `speed_front_v2` derives a frontal braking limit from the available distance.
+
+~~~python
+speed_original = max(self.MIN_SPEED, self.max_speed * (
+    1.0 - (abs(steering) / self.MAX_STEER_ANGLE) ** 1.8
+))
+speed_curve = math.sqrt(
+    self.lateral_accel_max * self.WHEELBASE_M /
+    max(abs(math.tan(steering)), 1e-5)
+)
+speed_front_v2 = math.sqrt(
+    2.0 * self.brake_accel * max(0.0, front_wide - self.front_margin)
+)
+~~~
+
+In **V3.1**, `corridor_clearance()` also samples a short local path, checking its center and lateral edges. If recent odometry, small steering/yaw rate and frontal clearance support a stable straight segment, `straight_confidence` lets the controller **gradually increase** the V2 frontal speed limit. The boost drops when confidence disappears and cannot override steering or cornering limits.
+
+~~~python
+target = max(0.0, min(
+    self.max_speed, speed_original, speed_curve, speed_front
+))
+drive.drive.steering_angle = float(steering)
+drive.drive.speed = float(command)
+self.drive_pub.publish(drive)
+~~~
+
+`target` is the desired speed, while `command` is the speed actually sent **after rate-limiting its changes** using `accel_limit` and `decel_limit`. This prevents sudden commanded speed jumps as LiDAR readings change.
+
 **Run configuration used for this project:**
 
 ~~~bash
@@ -179,7 +209,37 @@ Use `Ctrl+C` to stop the controller. **Do not run multiple driving controllers a
 
 ## ⏱️ Timer, telemetry and troubleshooting
 
-[`timing/lap_timer_sepang.py`](timing/lap_timer_sepang.py) starts timing after the vehicle moves 0.4 m, then counts a lap when it returns near the start after meeting minimum distance/time, re-arming and heading checks. It writes `sepang_lap_results_YYYYMMDD_HHMMSS.csv` to the directory where it is launched. It uses elapsed monotonic time and does not detect collisions.
+### How does the lap timer work?
+
+File: [`timing/lap_timer_sepang.py`](timing/lap_timer_sepang.py). This is a **separate ROS 2 node** that subscribes to `/ego_racecar/odom` but never publishes driving commands to `/drive`.
+
+- **Starting reference:** `odom_callback()` stores the first `(x, y)` coordinates and initial heading; `yaw_from_quaternion()` extracts the yaw angle from ROS orientation.
+- **Timer start:** it waits for the car to move **0.4 m** from the initial position, then sets `lap_start_time` with `time.monotonic()`.
+- **Lap detection:** the car must travel at least **5 m** away to re-arm the finish area, then return within **2 m** of the start. It must also meet **20 s** minimum lap time, **80 m** estimated travel distance and a compatible heading.
+- **Recording:** it increments `count`, updates lap/best times and writes a CSV row. Counting finishes after **10 laps**, but it **does not stop the driving controller**.
+
+This code prevents false lap counts:
+
+~~~python
+if distance_to_start >= self.REARM_RADIUS_M:
+    self.armed = True
+
+if not self.armed or distance_to_start > self.START_RADIUS_M:
+    return
+
+elapsed = now - self.lap_start_time
+heading_dot = math.cos(yaw - self.start_yaw)
+if (
+    elapsed < self.MIN_LAP_TIME_S
+    or self.lap_distance < self.MIN_LAP_DISTANCE_M
+    or heading_dot < self.MIN_HEADING_DOT
+):
+    return
+
+self.count += 1
+~~~
+
+Distance is **estimated by summing position changes from odometry**, ignoring jumps larger than 20 m. Each run writes `sepang_lap_results_YYYYMMDD_HHMMSS.csv` to the working directory. Timing uses elapsed monotonic time (not necessarily simulation time), and **collisions are not detected**.
 
 The controller logs English fields such as `ActualSpeed`, `CommandSpeed`, `TargetSpeed`, `FrontDistanceV2`, `CorridorDistance`, `Confidence`, `Mode` and `LimitedBy`. The `STRAIGHT`, `BLENDED` and `V2` modes describe whether the corridor-based boost is active.
 
