@@ -18,7 +18,7 @@ A reactive controller that drives the **Sepang** track in the F1TENTH simulator 
 3. **Find free space:** It finds contiguous regions with processed distance greater than **1.20 m** and chooses the widest gap.
 4. **Choose a target:** The target index blends **60% of the farthest point** in the selected gap and **40% of its center**.
 5. **Steer and set speed:** `scan_callback()` limits and smooths steering, then limits speed for turning, lateral acceleration and frontal clearance.
-6. **V3.1 straight-line boost:** When steering, yaw rate and recent odometry support a stable straight segment, a LiDAR corridor may raise the **frontal** speed limit by a bounded amount. Otherwise, the controller retains the conservative V2 frontal limit.
+6. **Straight-line speed adjustment:** When steering, yaw rate and recent odometry indicate stable movement, the controller checks a local LiDAR corridor and may increase the frontal speed limit by a bounded amount. When confidence or clearance is low, it keeps the conservative braking limit.
 7. **Drive:** Publish an `AckermannDriveStamped` command to `/drive`.
 
 **ROS 2 data flow:** `/scan` + `/ego_racecar/odom` → **Follow the Gap V3.1** → `/drive`. The timer reads odometry independently; it never commands the vehicle.
@@ -39,11 +39,11 @@ self.drive_pub = self.create_publisher(AckermannDriveStamped, '/drive', 10)
 
 ### Key functions
 
-| Function | Responsibility |
+| Function or stage | Responsibility |
 |---|---|
 | `preprocess_lidar()` | Clean, crop and smooth LiDAR ranges |
 | `choose_gap()` | Apply the safety bubble, find the widest gap and select a target |
-| `front_distance_v2()` | Estimate frontal clearance from the 20th percentile of valid measurements within ±12° |
+| Frontal clearance estimation | Obtain a reference distance from the 20th percentile of valid LiDAR measurements within ±12° |
 | `corridor_clearance()` | Estimate free distance along a finite-width local Ackermann corridor |
 | `confidence_component()` | Turn steering/yaw conditions into a confidence value for the straight-line boost |
 | `odom_callback()` | Update measured speed, yaw rate and position |
@@ -59,11 +59,11 @@ return int(0.6 * (gap_start + best_rel) + 0.4 * center)
 
 The chosen LiDAR angle is clipped to **±0.4189 rad** (approximately 24°). Subsequent steering commands are smoothed using `steer_alpha = 0.65`.
 
-**Speed logic:** The controller compares the configured maximum, steering-dependent limit, curve limit and frontal braking limit; the lowest determines its target. It then applies acceleration/deceleration rate limits. The V3.1 corridor boost can only *increase* the V2 frontal limit, by at most `front_boost_max × confidence`, and does not override the other speed limits.
+**Speed logic:** The controller compares the configured maximum with limits for steering, cornering and frontal clearance. The lowest sets the target speed. When enough space and straight-line confidence are available, corridor analysis can increase the frontal limit by up to `front_boost_max × confidence`, without overriding the other limits. Acceleration and braking rate limits are applied afterward.
 
 ### How does the controller calculate speed?
 
-Inside `scan_callback()`, the controller computes **three independent limits**: `speed_original` reduces speed for larger steering angles, `speed_curve` accounts for the configured lateral acceleration limit, and `speed_front_v2` derives a frontal braking limit from the available distance.
+Inside `scan_callback()`, the controller computes **three independent limits**: `speed_original` reduces speed for larger steering angles, `speed_curve` accounts for the configured lateral acceleration limit, and a frontal braking limit depends on the available distance. Two of the calculations are shown below:
 
 ~~~python
 speed_original = max(self.MIN_SPEED, self.max_speed * (
@@ -73,12 +73,11 @@ speed_curve = math.sqrt(
     self.lateral_accel_max * self.WHEELBASE_M /
     max(abs(math.tan(steering)), 1e-5)
 )
-speed_front_v2 = math.sqrt(
-    2.0 * self.brake_accel * max(0.0, front_wide - self.front_margin)
-)
 ~~~
 
-In **V3.1**, `corridor_clearance()` also samples a short local path, checking its center and lateral edges. If recent odometry, small steering/yaw rate and frontal clearance support a stable straight segment, `straight_confidence` lets the controller **gradually increase** the V2 frontal speed limit. The boost drops when confidence disappears and cannot override steering or cornering limits.
+The **frontal braking limit** uses LiDAR clearance after subtracting a safety margin: `v_front = √(2 × braking_deceleration × max(0, frontal_distance − margin))`. Less distance to stop results in a lower permitted speed.
+
+The controller also uses `corridor_clearance()` to sample a short local path, checking its center and lateral edges. If recent odometry, small steering/yaw rate and frontal clearance support stable movement, `straight_confidence` lets it **gradually increase** the frontal speed limit. When confidence drops, the boost deactivates and the conservative limit remains. Steering and cornering limits still apply.
 
 ~~~python
 target = max(0.0, min(
@@ -241,11 +240,11 @@ self.count += 1
 
 Distance is **estimated by summing position changes from odometry**, ignoring jumps larger than 20 m. Each run writes `sepang_lap_results_YYYYMMDD_HHMMSS.csv` to the working directory. Timing uses elapsed monotonic time (not necessarily simulation time), and **collisions are not detected**.
 
-The controller logs English fields such as `ActualSpeed`, `CommandSpeed`, `TargetSpeed`, `FrontDistanceV2`, `CorridorDistance`, `Confidence`, `Mode` and `LimitedBy`. The `STRAIGHT`, `BLENDED` and `V2` modes describe whether the corridor-based boost is active.
+The controller logs English fields such as `ActualSpeed`, `CommandSpeed`, `TargetSpeed`, `CorridorDistance`, `Confidence`, `Mode` and `LimitedBy`. The `Mode` field indicates whether straight-line speed enhancement is disabled, partially active or fully enabled.
 
 - **No vehicle motion:** Check topics with `ros2 topic list` and make sure only one controller publishes to `/drive`.
 - **Wrong map:** Rerun `configure_sepang.py` for the correct workspace, then restart the simulator.
 - **Missing ROS imports:** Source both ROS 2 and the built simulator workspace.
 - **Incorrect lap count:** Start the timer before moving the car and avoid resetting/teleporting mid-run.
 
-**Sources:** [F1TENTH Gym](https://github.com/f1tenth/f1tenth_gym) · [F1TENTH Gym ROS](https://github.com/f1tenth/f1tenth_gym_ros) · [ROS 2 Humble simulator setup](https://github.com/widegonz/F1Tenth-Repository). The included Sepang map comes from `Mapas-F1Tenth-v2.zip`; its redistribution terms should be checked. This controller is intended for **simulation**, not validated physical-vehicle operation.
+**Sources:** [F1TENTH Gym](https://github.com/f1tenth/f1tenth_gym) · [F1TENTH Gym ROS](https://github.com/f1tenth/f1tenth_gym_ros) · [ROS 2 Humble simulator setup](https://github.com/widegonz/F1Tenth-Repository). The included Sepang map comes from the map files supplied for this project; its redistribution terms should be checked. This controller is intended for **simulation**, not validated physical-vehicle operation.
