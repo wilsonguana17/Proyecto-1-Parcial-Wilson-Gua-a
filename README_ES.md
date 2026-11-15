@@ -18,7 +18,7 @@ Controlador reactivo para recorrer el circuito **Sepang** en el simulador F1TENT
 3. **Detección de espacio libre:** busca regiones consecutivas con distancia procesada mayor que **1.20 m** y selecciona el gap más ancho.
 4. **Selección del objetivo:** combina **60 % del punto más despejado** del gap con **40 % de su centro**.
 5. **Dirección y velocidad:** `scan_callback()` limita y suaviza el giro, y restringe la velocidad según la curva, la aceleración lateral y la distancia frontal.
-6. **Mejora V3.1 en rectas:** si el ángulo de dirección, la velocidad angular y una odometría reciente indican condiciones estables, un pasillo local del LiDAR puede aumentar de forma limitada el tope de velocidad frontal. En caso contrario, se conserva la restricción frontal de la V2.
+6. **Ajuste de velocidad en rectas:** si el ángulo de dirección, la velocidad angular y una odometría reciente indican condiciones estables, el controlador comprueba un pasillo local con LiDAR y puede aumentar de forma limitada la velocidad frontal. Si pierde confianza o detecta poco espacio, mantiene el límite de frenado conservador.
 7. **Movimiento:** publica un mensaje `AckermannDriveStamped` en `/drive`.
 
 **Flujo ROS 2:** `/scan` + `/ego_racecar/odom` → **Follow the Gap V3.1** → `/drive`. El cronómetro solo utiliza odometría: no envía comandos de movimiento.
@@ -39,11 +39,11 @@ self.drive_pub = self.create_publisher(AckermannDriveStamped, '/drive', 10)
 
 ### Funciones principales
 
-| Función | Responsabilidad |
+| Función o etapa | Responsabilidad |
 |---|---|
 | `preprocess_lidar()` | Limpia, recorta y suaviza las mediciones del LiDAR |
 | `choose_gap()` | Aplica la burbuja, detecta el gap más ancho y escoge el objetivo |
-| `front_distance_v2()` | Estima distancia frontal con el percentil 20 de las lecturas válidas en ±12° |
+| Estimación frontal | Obtiene una distancia de referencia con el percentil 20 de las lecturas válidas del LiDAR dentro de ±12° |
 | `corridor_clearance()` | Estima el recorrido libre dentro de un pasillo local de anchura finita |
 | `confidence_component()` | Calcula la confianza para mejorar la velocidad en rectas |
 | `odom_callback()` | Actualiza velocidad real, velocidad angular y posición |
@@ -59,11 +59,11 @@ return int(0.6 * (gap_start + best_rel) + 0.4 * center)
 
 El ángulo elegido se limita a **±0.4189 rad** (aproximadamente 24°). Los comandos de dirección sucesivos se suavizan con `steer_alpha = 0.65`.
 
-**Cálculo de velocidad:** se compara el máximo configurado con los límites por giro, curva y frenado frontal. El menor determina la velocidad objetivo, y después se aplican límites de aceleración/desaceleración. La mejora V3.1 solo puede *aumentar* el límite frontal de la V2, como máximo en `front_boost_max × confidence`, sin anular las demás restricciones.
+**Cálculo de velocidad:** se compara la velocidad máxima configurada con los límites por giro, curva y distancia frontal. El menor determina la velocidad objetivo. Cuando hay suficiente espacio y confianza en una recta, el análisis del pasillo puede aumentar el límite frontal hasta `front_boost_max × confidence`, sin anular las demás restricciones. Después se limitan los cambios de aceleración y frenado.
 
 ### ¿Cómo calcula el controlador la velocidad?
 
-Dentro de `scan_callback()` se calculan **tres límites independientes**: uno disminuye la velocidad cuando el volante gira mucho (`speed_original`), otro considera la aceleración lateral admisible en curvas (`speed_curve`) y el tercero estima una velocidad de frenado según el espacio libre adelante (`speed_front_v2`).
+Dentro de `scan_callback()` se calculan **tres límites independientes**: uno disminuye la velocidad cuando el volante gira mucho (`speed_original`), otro considera la aceleración lateral admisible en curvas (`speed_curve`) y el tercero estima una velocidad de frenado según la distancia frontal disponible. A continuación se muestran dos de las expresiones empleadas:
 
 ~~~python
 speed_original = max(self.MIN_SPEED, self.max_speed * (
@@ -73,12 +73,11 @@ speed_curve = math.sqrt(
     self.lateral_accel_max * self.WHEELBASE_M /
     max(abs(math.tan(steering)), 1e-5)
 )
-speed_front_v2 = math.sqrt(
-    2.0 * self.brake_accel * max(0.0, front_wide - self.front_margin)
-)
 ~~~
 
-La versión **V3.1** calcula adicionalmente `corridor_clearance()`: evalúa puntos a lo largo de una trayectoria local, con muestras en el centro y a ambos lados del pasillo. Si la odometría es reciente, el vehículo gira poco y hay suficiente espacio frontal, `straight_confidence` permite **aumentar gradualmente** el límite frontal de la V2. Si estas condiciones dejan de cumplirse, el aumento se desactiva; no sustituye las restricciones por curvas o giro.
+El **límite por frenado frontal** se calcula a partir de la distancia libre del LiDAR, descontando un margen: `v_frontal = √(2 × desaceleración_frenado × max(0, distancia_frontal − margen))`. Así, el vehículo recibe un límite menor cuando dispone de menos espacio para detenerse.
+
+El controlador también utiliza `corridor_clearance()` para evaluar una trayectoria local mediante muestras en el centro y a ambos lados del pasillo. Si la odometría es reciente, el vehículo gira poco y hay suficiente espacio frontal, `straight_confidence` permite **aumentar gradualmente** el límite frontal. Si estas condiciones dejan de cumplirse, el aumento se desactiva y se mantiene el cálculo conservador. Esta mejora no sustituye los límites por curvas o giro.
 
 ~~~python
 target = max(0.0, min(
@@ -241,11 +240,11 @@ self.count += 1
 
 La distancia recorrida se **estima acumulando desplazamientos entre mediciones de odometría**; saltos de posición mayores a 20 m se descartan. Los resultados se guardan como `sepang_lap_results_YYYYMMDD_HHMMSS.csv` en el directorio de ejecución. El contador usa tiempo real monotónico (no necesariamente tiempo simulado), y **no detecta colisiones**.
 
-El controlador registra etiquetas en inglés como `ActualSpeed`, `CommandSpeed`, `TargetSpeed`, `FrontDistanceV2`, `CorridorDistance`, `Confidence`, `Mode` y `LimitedBy`. Los modos `STRAIGHT`, `BLENDED` y `V2` indican cuánto interviene la mejora frontal en rectas.
+El controlador registra etiquetas en inglés como `ActualSpeed`, `CommandSpeed`, `TargetSpeed`, `CorridorDistance`, `Confidence`, `Mode` y `LimitedBy`. El campo `Mode` permite identificar si la mejora de velocidad en rectas está desactivada, parcialmente activa o completamente habilitada.
 
 - **No se mueve el carro:** revisa los tópicos con `ros2 topic list` y comprueba que solo un controlador publique en `/drive`.
 - **Aparece otro mapa:** vuelve a ejecutar `configure_sepang.py` en el entorno correcto y reinicia el simulador.
 - **Faltan módulos ROS:** carga ROS 2 y el workspace compilado.
 - **Conteo incorrecto:** inicia el cronómetro antes de mover el carro y evita reinicios o teletransportes en medio de la prueba.
 
-**Referencias:** [F1TENTH Gym](https://github.com/f1tenth/f1tenth_gym) · [F1TENTH Gym ROS](https://github.com/f1tenth/f1tenth_gym_ros) · [Entorno ROS 2 Humble](https://github.com/widegonz/F1Tenth-Repository). El mapa Sepang proviene de `Mapas-F1Tenth-v2.zip`; conviene verificar sus condiciones de redistribución. El controlador se diseñó para **simulación**, no está validado para un vehículo físico.
+**Referencias:** [F1TENTH Gym](https://github.com/f1tenth/f1tenth_gym) · [F1TENTH Gym ROS](https://github.com/f1tenth/f1tenth_gym_ros) · [Entorno ROS 2 Humble](https://github.com/widegonz/F1Tenth-Repository). El mapa Sepang proviene de los archivos de mapas suministrados para el proyecto; conviene verificar sus condiciones de redistribución. El controlador se diseñó para **simulación**, no está validado para un vehículo físico.
