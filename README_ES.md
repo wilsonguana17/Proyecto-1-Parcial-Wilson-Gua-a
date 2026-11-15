@@ -8,6 +8,12 @@ Este repositorio contiene un controlador reactivo **Follow the Gap** para el cir
 
 **Resultado observado en la simulación del autor:** 10 vueltas completadas, **777.40 s en total**, **77.47 s en la mejor vuelta**, sin colisiones **observadas por el operador**. Es el resultado de una prueba, no una garantía de rendimiento en otras computadoras o ejecuciones. El contador no detecta impactos.
 
+## 🎬 Demostración — Sepang (10 vueltas)
+
+[![▶ Ver la demostración de 10 vueltas en Sepang en YouTube](https://img.youtube.com/vi/9m-QhL65yLw/hqdefault.jpg)](https://youtu.be/9m-QhL65yLw)
+
+**▶ Haz clic en la vista previa para ver la carrera completa de 10 vueltas en YouTube.** GitHub muestra la miniatura, pero no reproduce videos de YouTube directamente dentro del README.
+
 ## 1. ¿Qué es el control reactivo Follow the Gap?
 
 El controlador **no consulta un mapa ni sigue una trayectoria global predefinida** para decidir cómo conducir. En cada actualización del LiDAR:
