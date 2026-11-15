@@ -8,6 +8,12 @@ This repository contains a reactive **Follow the Gap** controller for the **Sepa
 
 **What was observed in the author's simulation:** 10 laps completed, **777.40 s total**, **77.47 s best lap**, with no collisions **observed by the operator**. This is an experimental run, not a guarantee for every machine or run. The lap timer does not detect impacts.
 
+## 🎬 Race demonstration — Sepang (10 laps)
+
+[![▶ Watch the 10-lap Sepang run on YouTube](https://img.youtube.com/vi/9m-QhL65yLw/hqdefault.jpg)](https://youtu.be/9m-QhL65yLw)
+
+**▶ Click the video preview to watch the full 10-lap run on YouTube.** GitHub READMEs display the thumbnail, but do not play YouTube videos directly in the page.
+
 ## 1. Project idea: reactive navigation
 
 Unlike a global path planner, the controller **does not read a map or use a prerecorded racing line**. Its control loop processes LiDAR data at runtime:
