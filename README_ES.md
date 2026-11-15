@@ -61,6 +61,36 @@ El ángulo elegido se limita a **±0.4189 rad** (aproximadamente 24°). Los coma
 
 **Cálculo de velocidad:** se compara el máximo configurado con los límites por giro, curva y frenado frontal. El menor determina la velocidad objetivo, y después se aplican límites de aceleración/desaceleración. La mejora V3.1 solo puede *aumentar* el límite frontal de la V2, como máximo en `front_boost_max × confidence`, sin anular las demás restricciones.
 
+### ¿Cómo calcula el controlador la velocidad?
+
+Dentro de `scan_callback()` se calculan **tres límites independientes**: uno disminuye la velocidad cuando el volante gira mucho (`speed_original`), otro considera la aceleración lateral admisible en curvas (`speed_curve`) y el tercero estima una velocidad de frenado según el espacio libre adelante (`speed_front_v2`).
+
+~~~python
+speed_original = max(self.MIN_SPEED, self.max_speed * (
+    1.0 - (abs(steering) / self.MAX_STEER_ANGLE) ** 1.8
+))
+speed_curve = math.sqrt(
+    self.lateral_accel_max * self.WHEELBASE_M /
+    max(abs(math.tan(steering)), 1e-5)
+)
+speed_front_v2 = math.sqrt(
+    2.0 * self.brake_accel * max(0.0, front_wide - self.front_margin)
+)
+~~~
+
+La versión **V3.1** calcula adicionalmente `corridor_clearance()`: evalúa puntos a lo largo de una trayectoria local, con muestras en el centro y a ambos lados del pasillo. Si la odometría es reciente, el vehículo gira poco y hay suficiente espacio frontal, `straight_confidence` permite **aumentar gradualmente** el límite frontal de la V2. Si estas condiciones dejan de cumplirse, el aumento se desactiva; no sustituye las restricciones por curvas o giro.
+
+~~~python
+target = max(0.0, min(
+    self.max_speed, speed_original, speed_curve, speed_front
+))
+drive.drive.steering_angle = float(steering)
+drive.drive.speed = float(command)
+self.drive_pub.publish(drive)
+~~~
+
+`target` es la velocidad deseada; `command` es la velocidad enviada **después de limitar cuánto puede cambiar entre actualizaciones** mediante `accel_limit` y `decel_limit`. De este modo, el carro no recibe un salto instantáneo de velocidad cada vez que cambia el LiDAR.
+
 **Configuración usada en este proyecto:**
 
 ~~~bash
@@ -179,7 +209,37 @@ Detén el controlador con `Ctrl+C`. **No ejecutes dos controladores a la vez.** 
 
 ## ⏱️ Cronómetro, telemetría y problemas frecuentes
 
-[`timing/lap_timer_sepang.py`](timing/lap_timer_sepang.py) comienza a medir tras un movimiento de 0.4 m. Cuenta una vuelta al regresar cerca de la salida, siempre que se cumplan las condiciones de distancia/tiempo mínimos, rearme y orientación. Guarda `sepang_lap_results_YYYYMMDD_HHMMSS.csv` en el directorio desde donde se ejecuta. Usa tiempo transcurrido monotónico y no detecta choques.
+### ¿Cómo funciona el contador de vueltas?
+
+Archivo: [`timing/lap_timer_sepang.py`](timing/lap_timer_sepang.py). Es **otro nodo ROS 2**: se suscribe a `/ego_racecar/odom`, pero no publica en `/drive` ni modifica el movimiento del carro.
+
+- **Referencia inicial:** `odom_callback()` guarda las primeras coordenadas `(x, y)` y la orientación inicial; `yaw_from_quaternion()` transforma la orientación de ROS a un ángulo de guiñada.
+- **Inicio del cronómetro:** espera hasta que el vehículo se aleje **0.4 m** de la posición inicial y entonces registra `lap_start_time` mediante `time.monotonic()`.
+- **Detección de una vuelta:** el vehículo debe alejarse **5 m** para rearmar la meta y regresar a menos de **2 m** del inicio. Además, se requieren **20 s**, **80 m recorridos estimados** y una orientación compatible con la inicial.
+- **Registro:** incrementa `count`, calcula el tiempo de la vuelta y la mejor vuelta, y escribe una fila en un CSV. Al llegar a **10 vueltas**, finaliza el conteo, aunque **no detiene el controlador**.
+
+El fragmento principal que evita contar vueltas falsas es:
+
+~~~python
+if distance_to_start >= self.REARM_RADIUS_M:
+    self.armed = True
+
+if not self.armed or distance_to_start > self.START_RADIUS_M:
+    return
+
+elapsed = now - self.lap_start_time
+heading_dot = math.cos(yaw - self.start_yaw)
+if (
+    elapsed < self.MIN_LAP_TIME_S
+    or self.lap_distance < self.MIN_LAP_DISTANCE_M
+    or heading_dot < self.MIN_HEADING_DOT
+):
+    return
+
+self.count += 1
+~~~
+
+La distancia recorrida se **estima acumulando desplazamientos entre mediciones de odometría**; saltos de posición mayores a 20 m se descartan. Los resultados se guardan como `sepang_lap_results_YYYYMMDD_HHMMSS.csv` en el directorio de ejecución. El contador usa tiempo real monotónico (no necesariamente tiempo simulado), y **no detecta colisiones**.
 
 El controlador registra etiquetas en inglés como `ActualSpeed`, `CommandSpeed`, `TargetSpeed`, `FrontDistanceV2`, `CorridorDistance`, `Confidence`, `Mode` y `LimitedBy`. Los modos `STRAIGHT`, `BLENDED` y `V2` indican cuánto interviene la mejora frontal en rectas.
 
