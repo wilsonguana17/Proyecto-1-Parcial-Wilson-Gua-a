@@ -258,6 +258,12 @@ El controlador registra etiquetas en inglés como `ActualSpeed`, `CommandSpeed`,
 **Controlador definitivo de competencia: [Follow the Gap V3.9](controllers/gap_follow_sepang_v39.py).**
 Los dos vehículos ejecutan **el mismo algoritmo Python**: únicamente cambian los tópicos ROS asociados y el valor configurado de velocidad máxima. En esta sección se documenta la versión final, no las pruebas intermedias.
 
+## 🎥 Parte 2 — Video de la competencia
+
+[![Ver el video de la parte 2 en F1TENTH Sepang](https://img.youtube.com/vi/_IGRx_2CJ-s/hqdefault.jpg)](https://youtu.be/_IGRx_2CJ-s)
+
+**[▶ Ver el video de la parte 2 en YouTube](https://youtu.be/_IGRx_2CJ-s)** — Haz clic en la miniatura para abrir el video.
+
 ## 🎯 Pruebas y resultados observados
 
 | Prueba | Configuración | Resultado reportado |
