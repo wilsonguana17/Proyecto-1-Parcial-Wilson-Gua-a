@@ -270,6 +270,14 @@ Los dos vehículos ejecutan **el mismo algoritmo Python**: únicamente cambian l
 
 **[▶ Ver el video de la parte 2 en YouTube](https://youtu.be/_IGRx_2CJ-s)** — Haz clic en la miniatura para abrir el video.
 
+### 🎬 Video original sin edición — Parte 2 (Google Drive)
+
+[![Ver el video original sin edición de la parte 2 en Google Drive](https://drive.google.com/thumbnail?id=1qDRfRShxvAR081CvCkMgt6b2JzihsOHV&sz=w640)](https://drive.google.com/file/d/1qDRfRShxvAR081CvCkMgt6b2JzihsOHV/view?usp=sharing)
+
+**[▶ Ver grabación completa y original sin edición de la parte 2 en Google Drive](https://drive.google.com/file/d/1qDRfRShxvAR081CvCkMgt6b2JzihsOHV/view?usp=sharing)** — Haz clic en la miniatura o en el enlace para abrir el video.
+
+*Si el video no se puede abrir, el propietario debe configurar el archivo en Google Drive como **Cualquier persona con el enlace → Lector**.*
+
 ## 🎯 Pruebas y resultados observados
 
 | Prueba | Configuración | Resultado reportado |
