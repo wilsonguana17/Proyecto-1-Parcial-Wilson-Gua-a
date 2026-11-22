@@ -13,6 +13,12 @@ Este repositorio reúne la **parte 1 (un vehículo con Follow the Gap)** y la **
 
 **[▶ Ver en YouTube](https://youtu.be/9m-QhL65yLw)** — Haz clic en la miniatura para abrir el video.
 
+### 🎬 Video original sin edición — 10 vueltas (Parte 1)
+
+[![Ver el video original sin edición de las 10 vueltas](https://img.youtube.com/vi/5wyF8lTBg24/hqdefault.jpg)](https://youtu.be/5wyF8lTBg24)
+
+**[▶ Ver grabación original sin edición en YouTube](https://youtu.be/5wyF8lTBg24)** — Haz clic en la miniatura para abrir la grabación original completa.
+
 ## 💡 ¿Cómo funciona Follow the Gap?
 
 1. **Lectura del LiDAR:** `preprocess_lidar()` toma el sector frontal ±90°, trata lecturas inválidas, limita las distancias a 4.5 m y suaviza con una ventana de 5 muestras.
