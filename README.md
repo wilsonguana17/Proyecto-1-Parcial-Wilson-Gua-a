@@ -271,7 +271,22 @@ Both cars run **the same Python algorithm**; only ROS topic remappings and the m
 | Static obstacle avoidance | Sepang with five manually added occupancy-map obstacles | Ten consecutive laps reported without collision |
 | Dynamic opponent | Same five-obstacle map, two autonomous cars, opponent initially ~5 m ahead | Ten laps for each car and **one successful overtake** reported without collision |
 
-The final Part 2 run was reported by the project author. Per-lap CSVs and an overtaking video can be added to `results/` as supporting evidence; **no exact final Part 2 lap times or collision telemetry are supplied here**. The lap counters do not automatically detect collisions. The assignment does not specify a minimum number of overtakes beyond passing the additional robot during the race.
+## 📊 Part 2 — Final two-car race results (22 November 2026)
+
+Both cars ran **Follow the Gap V3.9** on the same Sepang track with five static obstacles. The ego vehicle started about 5 m behind the opponent and performed one observed overtake during the race.
+
+| Metric | Ego vehicle (main car) | Opponent vehicle |
+|---|---:|---:|
+| Reactive controller | Follow the Gap V3.9 | Follow the Gap V3.9 |
+| Configured maximum speed | 12 m/s | 6 m/s |
+| **Laps completed** | **10 / 10 ✅** | **10 / 10 ✅** |
+| **Best lap time** | **81.24 s 🥇** | **93.43 s 🥈** |
+| Fastest lap number | 6 | 6 |
+| **Total time (10 laps)** | **847.96 s** | **944.78 s** |
+
+The main car finished its ten laps **96.82 s faster** (difference between the two timer totals). The times above were transcribed from the provided screenshot of the two lap-counter terminals: `sepang_lap_results_ego_20261122_160532.csv` and `sepang_lap_results_opp_20261122_160552.csv` were the CSV filenames shown by those terminals, but the CSV files themselves have not been uploaded to this repository.
+
+**Validation scope:** The two counters each reported `FINISH 10/10`. The author reported no collisions and one successful overtake. The lap timers measure laps and elapsed time but do **not** independently detect collisions or verify overtaking; the Part 2 video above supplies visual context. The assignment requires overtaking the additional robot during the race, not multiple overtakes.
 
 ## 🧠 Reactive approach: Follow the Gap V3.9
 
