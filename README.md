@@ -435,6 +435,22 @@ To test Part 2 Task 1 independently, keep `Sepang_5obs_map` but set `num_agent: 
 
 ## ⏱️ Evidence, logs and troubleshooting
 
+
+### How `lap_timer_sepang_dual.py` is structured
+
+The [dual lap timer](timing/lap_timer_sepang_dual.py) is an **independent ROS 2 node**. The same file runs twice: once with `vehicle:=ego` (subscribing to `/ego_racecar/odom`) and once with `vehicle:=opp` (subscribing to `/opp_racecar/odom`). It never sends steering or speed commands.
+
+| Main component | Role |
+|---|---|
+| `__init__()` | Selects the vehicle and odometry topic, initializes lap counters, and creates a separate CSV file. |
+| `yaw_from_quaternion()` | Converts the orientation quaternion to heading (yaw). |
+| `odom_callback()` | Reads positions, starts timing after initial movement, checks each return to the start, and records lap/best/total times until 10 laps. |
+| `destroy_node()` | Closes the CSV file cleanly. |
+| `main()` | Starts the ROS 2 node and keeps it listening for odometry updates. |
+
+To avoid false counts, a completed lap must satisfy the start-area rearming distance, minimum travel distance and time, and compatible heading. **Collision detection is not part of this timer.**
+
+
 - `lap_timer_sepang_dual.py` uses each car's own odometry and the **same 10-lap counting criteria** as the original timer: leave the start by 5 m, return within 2 m, satisfy a minimum of 20 s / 80 m, and match the starting heading. Timing begins after 0.4 m initial movement.
 - Separate CSV files are produced in the current working directory: `sepang_lap_results_ego_YYYYMMDD_HHMMSS.csv` and `sepang_lap_results_opp_YYYYMMDD_HHMMSS.csv`. They report lap, lap time, best lap, elapsed time and estimated distance.
 - The controller prints measured/commanded/target speed, steering, local clearance, current coordinates and `PASS START`, `PASS WAIT`, `PASS ABORT`, `PASS COMPLETE` during overtaking attempts.
