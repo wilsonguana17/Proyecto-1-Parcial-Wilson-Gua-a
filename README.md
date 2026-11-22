@@ -258,6 +258,12 @@ The controller logs English fields such as `ActualSpeed`, `CommandSpeed`, `Targe
 **Final competition controller: [Follow the Gap V3.9](controllers/gap_follow_sepang_v39.py).**
 Both cars run **the same Python algorithm**; only ROS topic remappings and the maximum speed setting differ. This section documents the final controller, not the intermediate experiments.
 
+## 🎥 Part 2 — Competition demonstration
+
+[![Watch the Part 2 F1TENTH Sepang competition video](https://img.youtube.com/vi/_IGRx_2CJ-s/hqdefault.jpg)](https://youtu.be/_IGRx_2CJ-s)
+
+**[▶ Watch the Part 2 video on YouTube](https://youtu.be/_IGRx_2CJ-s)** — Click the thumbnail to open the video.
+
 ## 🎯 Competition tasks and observed outcome
 
 | Test | Setup | Observed outcome |
