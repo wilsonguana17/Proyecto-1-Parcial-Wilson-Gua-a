@@ -270,6 +270,14 @@ Both cars run **the same Python algorithm**; only ROS topic remappings and the m
 
 **[▶ Watch the Part 2 video on YouTube](https://youtu.be/_IGRx_2CJ-s)** — Click the thumbnail to open the video.
 
+### 🎬 Original unedited recording — Part 2 (Google Drive)
+
+[![Watch the original unedited Part 2 recording on Google Drive](https://drive.google.com/thumbnail?id=1qDRfRShxvAR081CvCkMgt6b2JzihsOHV&sz=w640)](https://drive.google.com/file/d/1qDRfRShxvAR081CvCkMgt6b2JzihsOHV/view?usp=sharing)
+
+**[▶ Watch the complete original, unedited Part 2 recording on Google Drive](https://drive.google.com/file/d/1qDRfRShxvAR081CvCkMgt6b2JzihsOHV/view?usp=sharing)** — Click the preview or link to open the recording.
+
+*If you cannot open the video, the file owner needs to enable **Anyone with the link → Viewer** in Google Drive sharing settings.*
+
 ## 🎯 Competition tasks and observed outcome
 
 | Test | Setup | Observed outcome |
