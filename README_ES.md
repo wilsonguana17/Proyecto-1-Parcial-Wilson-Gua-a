@@ -271,7 +271,22 @@ Los dos vehículos ejecutan **el mismo algoritmo Python**: únicamente cambian l
 | Evasión de obstáculos | Sepang con cinco obstáculos dibujados en el mapa de ocupación | 10 vueltas consecutivas sin colisión |
 | Oponente dinámico | Mismo mapa con cinco obstáculos y dos carros autónomos; oponente inicialmente ~5 m adelante | 10 vueltas para cada vehículo y **un adelantamiento exitoso**, sin colisión |
 
-Estos resultados fueron comunicados por el autor del proyecto. Se pueden adjuntar los CSV de cada vuelta y un video del adelantamiento en `results/` como evidencias. **Aquí no se atribuyen tiempos exactos a la prueba final de V3.9 porque no se proporcionaron esos registros.** El contador no detecta colisiones automáticamente. El enunciado exige que el robot adicional sea rebasado durante la carrera, sin especificar un número mínimo de rebases adicionales.
+## 📊 Parte 2 — Resultados de la carrera final (22 de noviembre de 2026)
+
+Ambos vehículos ejecutaron **Follow the Gap V3.9** en Sepang con cinco obstáculos estáticos. El vehículo principal comenzó aproximadamente 5 m detrás del oponente y realizó un adelantamiento observado durante la carrera.
+
+| Parámetro | Vehículo principal (EGO) | Vehículo oponente (OPP) |
+|---|---:|---:|
+| Controlador reactivo | Follow the Gap V3.9 | Follow the Gap V3.9 |
+| Velocidad máxima configurada | 12 m/s | 6 m/s |
+| **Vueltas completadas** | **10 / 10 ✅** | **10 / 10 ✅** |
+| **Mejor tiempo por vuelta** | **81.24 s 🥇** | **93.43 s 🥈** |
+| Número de la vuelta más rápida | 6 | 6 |
+| **Tiempo total (10 vueltas)** | **847.96 s** | **944.78 s** |
+
+El vehículo principal completó sus diez vueltas **96.82 s antes** que el oponente, al comparar los tiempos totales registrados. Los valores se transcribieron de la captura de pantalla proporcionada con las dos terminales de cronometraje. En ella aparecen los nombres `sepang_lap_results_ego_20261122_160532.csv` y `sepang_lap_results_opp_20261122_160552.csv`; los archivos CSV todavía no se han incorporado al repositorio.
+
+**Alcance de la validación:** Ambos contadores mostraron `FINISH 10/10`. El autor confirmó que no hubo colisiones y que se realizó un adelantamiento. Los contadores registran vueltas y tiempos, pero **no detectan por sí solos colisiones ni adelantamientos**; el video de la parte 2 permite observar la competencia. El enunciado solicita rebasar al robot adicional durante la carrera, sin exigir múltiples adelantamientos.
 
 ## 🧠 Enfoque reactivo: Follow the Gap V3.9
 
