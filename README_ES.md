@@ -298,7 +298,12 @@ Ambos vehículos ejecutaron **Follow the Gap V3.9** en Sepang con cinco obstácu
 | Número de la vuelta más rápida | 6 | 6 |
 | **Tiempo total (10 vueltas)** | **847.96 s** | **944.78 s** |
 
-El vehículo principal completó sus diez vueltas **96.82 s antes** que el oponente, al comparar los tiempos totales registrados. Los valores se transcribieron de la captura de pantalla proporcionada con las dos terminales de cronometraje. En ella aparecen los nombres `sepang_lap_results_ego_20261122_160532.csv` y `sepang_lap_results_opp_20261122_160552.csv`; los archivos CSV todavía no se han incorporado al repositorio.
+El vehículo principal completó sus diez vueltas **96.82 s antes** que el oponente, según la diferencia de tiempos totales. Los resultados se verificaron directamente con los **archivos CSV originales de las 10 vueltas**, que ya están disponibles en este repositorio:
+
+- **Principal (EGO):** [`results/sepang_lap_results_ego_20261122_160532.csv`](results/sepang_lap_results_ego_20261122_160532.csv) — mejor vuelta **81.239 s** (vuelta 6), total **847.960 s**.
+- **Oponente (OPP):** [`results/sepang_lap_results_opp_20261122_160552.csv`](results/sepang_lap_results_opp_20261122_160552.csv) — mejor vuelta **93.431 s** (vuelta 6), total **944.780 s**.
+
+La tabla anterior redondea los valores originales a dos decimales para facilitar la lectura.
 
 **Alcance de la validación:** Ambos contadores mostraron `FINISH 10/10`. El autor confirmó que no hubo colisiones y que se realizó un adelantamiento. Los contadores registran vueltas y tiempos, pero **no detectan por sí solos colisiones ni adelantamientos**; el video de la parte 2 permite observar la competencia. El enunciado solicita rebasar al robot adicional durante la carrera, sin exigir múltiples adelantamientos.
 
