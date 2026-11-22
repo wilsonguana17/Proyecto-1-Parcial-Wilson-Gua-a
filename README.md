@@ -1,9 +1,11 @@
-# 🏎️ F1TENTH Sepang | Reactive Follow the Gap V3.1
+# 🏎️ F1TENTH Sepang | Reactive Follow the Gap — Parts 1 & 2
 
 **English** · [Español](README_ES.md)  
 **ROS 2 Humble · Ubuntu 22.04 · LiDAR · Ackermann steering**
 
-A reactive controller that drives the **Sepang** track in the F1TENTH simulator without a predefined racing line. The project includes a **10-lap timer**, Sepang map, and setup script. The controller uses current LiDAR measurements to steer and odometry to monitor vehicle motion.
+This repository contains **Part 1 (single-car Follow the Gap)** and **Part 2 (five obstacles plus two-car dynamic overtaking)** on Sepang, without a predefined global racing line. The project includes a **10-lap timer**, Sepang map, and setup script. The controller uses current LiDAR measurements to steer and odometry to monitor vehicle motion.
+
+**Contents:** [Part 1 — original controller](#-how-follow-the-gap-works) · [Part 2 — competition controller V3.9](#-part-2--five-static-obstacles-and-one-dynamic-opponent)
 
 ## 🎥 10-lap demonstration
 
@@ -248,3 +250,170 @@ The controller logs English fields such as `ActualSpeed`, `CommandSpeed`, `Targe
 - **Incorrect lap count:** Start the timer before moving the car and avoid resetting/teleporting mid-run.
 
 **Sources:** [F1TENTH Gym](https://github.com/f1tenth/f1tenth_gym) · [F1TENTH Gym ROS](https://github.com/f1tenth/f1tenth_gym_ros) · [ROS 2 Humble simulator setup](https://github.com/widegonz/F1Tenth-Repository). The included Sepang map comes from the map files supplied for this project; its redistribution terms should be checked. This controller is intended for **simulation**, not validated physical-vehicle operation.
+
+---
+
+# 🏁 Part 2 — Five static obstacles and one dynamic opponent
+
+**Final competition controller: [Follow the Gap V3.9](controllers/gap_follow_sepang_v39.py).**
+Both cars run **the same Python algorithm**; only ROS topic remappings and the maximum speed setting differ. This section documents the final controller, not the intermediate experiments.
+
+## 🎯 Competition tasks and observed outcome
+
+| Test | Setup | Observed outcome |
+|---|---|---|
+| Static obstacle avoidance | Sepang with five manually added occupancy-map obstacles | Ten consecutive laps reported without collision |
+| Dynamic opponent | Same five-obstacle map, two autonomous cars, opponent initially ~5 m ahead | Ten laps for each car and **one successful overtake** reported without collision |
+
+The final Part 2 run was reported by the project author. Per-lap CSVs and an overtaking video can be added to `results/` as supporting evidence; **no exact final Part 2 lap times or collision telemetry are supplied here**. The lap counters do not automatically detect collisions. The assignment does not specify a minimum number of overtakes beyond passing the additional robot during the race.
+
+## 🧠 Reactive approach: Follow the Gap V3.9
+
+The controller uses a local reactive policy rather than a predefined global racing line:
+
+1. **Scan preprocessing:** `preprocess_lidar()` takes the front 180° of `/scan`, handles missing returns conservatively, caps range, and applies a 3-ray local minimum to preserve obstacle boundaries.
+2. **Safe-gap selection:** `choose_gap()` searches contiguous free regions within ±65°, using a speed-dependent lookahead (`lookahead_base + lookahead_gain × actual_speed`, capped at 12 m). A local bubble discourages steering toward protruding frontal obstacles.
+3. **Steering and corridor checks:** `refine_steering()` examines alternate steering angles when the nominal path is too short. `path_clearance()` estimates reachable free distance along an Ackermann arc, checking the path center and both lateral edges.
+4. **Adaptive speed:** the chosen speed is the minimum of maximum-speed, steering, lateral-acceleration and path-clearance limits. Acceleration and deceleration commands are rate-limited. **A configured maximum of 12 m/s does not imply that the car always reaches 12 m/s.**
+5. **Opportunistic overtaking:** `opp_callback()` receives the moving opponent's odometry. `_relative()` measures relative pose; `_overtake()` evaluates candidate corridors to the left and right and enters `OVERTAKE` only when a feasible corridor is identified. `_pass_path()` checks candidate lateral paths and models the opponent's future occupancy; `_filtered()` separates the opponent's approximate LiDAR silhouette from static returns while retaining a separate dynamic collision check. Once the opponent is behind, the controller resumes `NORMAL`.
+6. **ROS output:** `scan_callback()` publishes an `AckermannDriveStamped` command through the car's mapped drive topic.
+
+**Sensor scope:** normal wall/obstacle avoidance uses LiDAR and own odometry. Dynamic overtaking **also uses the opponent's odometry** published by this simulator; it is not a LiDAR-only opponent tracker. The local path checks are estimates, not formal collision guarantees.
+
+### Code organization and ROS interfaces
+
+| Path | Purpose |
+|---|---|
+| [`controllers/gap_follow_sepang_v39.py`](controllers/gap_follow_sepang_v39.py) | Part 2 final reactive controller, adaptive speed, static obstacle avoidance and overtaking |
+| [`timing/lap_timer_sepang_dual.py`](timing/lap_timer_sepang_dual.py) | Two independent 10-lap timers: `vehicle:=ego` and `vehicle:=opp` |
+| [`scripts/configure_sepang_part2.py`](scripts/configure_sepang_part2.py) | Copies Part 2 map and sets `num_agent: 2`, initial poses and map location |
+| [`maps/Sepang_5obs_map.yaml`](maps/Sepang_5obs_map.yaml) | Occupancy-map metadata; references `Sepang_5obs_map.png` |
+| `maps/Sepang_5obs_map.png` | **Required:** definitive five-obstacle PNG created in GIMP; add the exact image from the local simulation workspace |
+| `results/` | Optional race evidence (CSV logs/screenshots/video links) |
+| [`controllers/gap_follow_sepang_v31_en.py`](controllers/gap_follow_sepang_v31_en.py) | Original Part 1 controller, preserved unchanged |
+| [`timing/lap_timer_sepang.py`](timing/lap_timer_sepang.py) | Original Part 1 lap timer, preserved unchanged |
+
+ROS topics for the two cars:
+
+| Signal | Ego / main car | Opponent |
+|---|---|---|
+| LaserScan | `/scan` | `/opp_scan` |
+| Own odometry | `/ego_racecar/odom` | `/opp_racecar/odom` |
+| Other car's odometry | `/ego_racecar/opp_odom` | `/opp_racecar/opp_odom` |
+| Drive command | `/drive` | `/opp_drive` |
+
+## ⚙️ Part 2 setup (same repository and simulator as Part 1)
+
+Follow the Part 1 dependency instructions above first. The ROS simulator remains an **external** workspace, here assumed to be `~/F1Tenth-Repository`.
+
+**Required map asset:** the edited PNG is unique to the five obstacles placed for this project. Copy the definitive image from your Ubuntu workspace into `maps/Sepang_5obs_map.png` in this repository, and commit that PNG together with this code. A screenshot of RViz is **not** a substitute for the original occupancy map. The existing Part 2 YAML retains the original map resolution (0.05944 m/pixel) and origin.
+
+For an existing local installation that already has the final map inside the simulator:
+
+~~~bash
+cd ~/Proyecto-1-Parcial-Wilson-Gua-a
+cp ~/F1Tenth-Repository/src/f1tenth_gym_ros/maps/Sepang_5obs_map.png maps/
+~~~
+
+Configure a fresh Part 2 run **after the PNG is present**:
+
+~~~bash
+cd ~/Proyecto-1-Parcial-Wilson-Gua-a
+python3 scripts/configure_sepang_part2.py --workspace ~/F1Tenth-Repository
+
+cd ~/F1Tenth-Repository
+source /opt/ros/humble/setup.bash
+colcon build --symlink-install
+source install/setup.bash
+~~~
+
+The setup script backs up `sim.yaml` and configures:
+
+~~~yaml
+map_path: '/home/wilson/F1Tenth-Repository/src/f1tenth_gym_ros/maps/Sepang_5obs_map'
+map_img_ext: '.png'
+num_agent: 2
+sx: -14.14
+sy: -1.14
+stheta: 0.08
+sx1: -9.16
+sy1: -0.74
+stheta1: 0.08
+~~~
+
+The `map_path` shown above is an **example** for the author's Ubuntu account: the script automatically uses the supplied workspace path on other machines. The two spawn centers are about 5 m apart along the initial heading; **verify both poses are on the road, free from obstacles, in RViz**. Do **not** rerun the Part 1 setup script for this test: it resets `num_agent` to 1.
+
+## 🚀 Run two cars and time ten laps (five terminals)
+
+**Terminal 1 — ROS simulator:**
+
+~~~bash
+cd ~/F1Tenth-Repository
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch f1tenth_gym_ros gym_bridge_launch.py
+~~~
+
+Start **both timers while the vehicles are stationary**, before either driving controller.
+
+**Terminal 2 — ego timer:**
+
+~~~bash
+cd ~/Proyecto-1-Parcial-Wilson-Gua-a
+source /opt/ros/humble/setup.bash
+source ~/F1Tenth-Repository/install/setup.bash
+python3 timing/lap_timer_sepang_dual.py --ros-args -r __node:=lap_timer_ego -p vehicle:=ego
+~~~
+
+**Terminal 3 — opponent timer:**
+
+~~~bash
+cd ~/Proyecto-1-Parcial-Wilson-Gua-a
+source /opt/ros/humble/setup.bash
+source ~/F1Tenth-Repository/install/setup.bash
+python3 timing/lap_timer_sepang_dual.py --ros-args -r __node:=lap_timer_opponent -p vehicle:=opp
+~~~
+
+**Terminal 4 — opponent, V3.9 at a maximum of 6 m/s:**
+
+~~~bash
+cd ~/Proyecto-1-Parcial-Wilson-Gua-a
+source /opt/ros/humble/setup.bash
+source ~/F1Tenth-Repository/install/setup.bash
+python3 controllers/gap_follow_sepang_v39.py --ros-args \
+  -r __node:=controller_opponent \
+  -r /scan:=/opp_scan \
+  -r /ego_racecar/odom:=/opp_racecar/odom \
+  -r /ego_racecar/opp_odom:=/opp_racecar/opp_odom \
+  -r /drive:=/opp_drive \
+  -p max_speed:=6.0 -p accel_limit:=5.0
+~~~
+
+**Terminal 5 — ego, the same V3.9 at a maximum of 12 m/s:**
+
+~~~bash
+cd ~/Proyecto-1-Parcial-Wilson-Gua-a
+source /opt/ros/humble/setup.bash
+source ~/F1Tenth-Repository/install/setup.bash
+python3 controllers/gap_follow_sepang_v39.py --ros-args \
+  -r __node:=controller_ego \
+  -p max_speed:=12.0 -p accel_limit:=5.0
+~~~
+
+In two-agent mode this version of the gym bridge advances the simulation **only after both drive topics have received commands**. The opponent may stay still until the ego controller starts. Do **not** publish two controllers to the same drive topic.
+
+### Optional: static-obstacles-only run
+
+To test Part 2 Task 1 independently, keep `Sepang_5obs_map` but set `num_agent: 1` in the simulator's `sim.yaml`, rebuild if required and restart. Run **one** V3.9 controller on the ego topics and the original or dual ego lap timer. Restore `num_agent: 2` before the overtaking test.
+
+## ⏱️ Evidence, logs and troubleshooting
+
+- `lap_timer_sepang_dual.py` uses each car's own odometry and the **same 10-lap counting criteria** as the original timer: leave the start by 5 m, return within 2 m, satisfy a minimum of 20 s / 80 m, and match the starting heading. Timing begins after 0.4 m initial movement.
+- Separate CSV files are produced in the current working directory: `sepang_lap_results_ego_YYYYMMDD_HHMMSS.csv` and `sepang_lap_results_opp_YYYYMMDD_HHMMSS.csv`. They report lap, lap time, best lap, elapsed time and estimated distance.
+- The controller prints measured/commanded/target speed, steering, local clearance, current coordinates and `PASS START`, `PASS WAIT`, `PASS ABORT`, `PASS COMPLETE` during overtaking attempts.
+- **A `PASS COMPLETE` message is not independent proof of a safe pass.** Use an RViz screen recording to confirm the physical order of the cars changes without contact. The counters do not detect crashes, stop cars or verify overtaking.
+- **If the cars do not move**, check `num_agent: 2`, both `/drive` and `/opp_drive`, and both running controllers. Use `ros2 topic list`.
+- **If the wrong map appears**, check `map_path`, matching PNG/YAML names and whether the map was copied and the simulator restarted.
+- **If counting is incorrect**, restart the simulator and both lap timers from stationary starting poses; do not teleport during a timed run.
+
+**Scope:** F1Tenth simulation only. The original Part 1 demonstration remains available above.
