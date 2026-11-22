@@ -13,6 +13,12 @@ This repository contains **Part 1 (single-car Follow the Gap)** and **Part 2 (fi
 
 **[▶ Watch on YouTube](https://youtu.be/9m-QhL65yLw)** — Click the preview to open the video.
 
+### 🎬 Original unedited 10-lap recording (Part 1)
+
+[![Watch the original unedited 10-lap recording](https://img.youtube.com/vi/5wyF8lTBg24/hqdefault.jpg)](https://youtu.be/5wyF8lTBg24)
+
+**[▶ Watch the original unedited recording on YouTube](https://youtu.be/5wyF8lTBg24)** — Click the thumbnail to open the complete original recording.
+
 ## 💡 How Follow the Gap works
 
 1. **Read LiDAR:** `preprocess_lidar()` selects the frontal ±90° scan, handles invalid readings, caps distances at 4.5 m and smooths with a 5-sample window.
