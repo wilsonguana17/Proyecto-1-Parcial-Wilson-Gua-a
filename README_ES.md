@@ -435,6 +435,22 @@ Para evaluar únicamente la primera prueba de la parte 2, conserva `Sepang_5obs_
 
 ## ⏱️ Contadores, evidencias y problemas frecuentes
 
+
+### ¿Cómo está estructurado `lap_timer_sepang_dual.py`?
+
+El [contador dual](timing/lap_timer_sepang_dual.py) es un **nodo ROS 2 independiente**. Se ejecuta dos veces con el mismo archivo: `vehicle:=ego` lee `/ego_racecar/odom` y `vehicle:=opp` lee `/opp_racecar/odom`. No envía órdenes de velocidad ni dirección.
+
+| Función principal | Responsabilidad |
+|---|---|
+| `__init__()` | Selecciona el vehículo y su tópico de odometría, inicializa los contadores y crea un CSV independiente. |
+| `yaw_from_quaternion()` | Convierte la orientación del vehículo en un ángulo de rumbo (yaw). |
+| `odom_callback()` | Lee la posición, inicia el cronómetro al detectar movimiento, valida cada vuelta y registra tiempo por vuelta, mejor tiempo y total hasta completar 10. |
+| `destroy_node()` | Cierra correctamente el archivo CSV. |
+| `main()` | Inicializa el nodo ROS 2 y mantiene activa la recepción de odometría. |
+
+Para evitar vueltas falsas, comprueba que el carro se aleje de la salida, recorra una distancia y tiempo mínimos y regrese con orientación compatible. **Este contador no detecta colisiones.**
+
+
 - `lap_timer_sepang_dual.py` aplica los **mismos criterios de 10 vueltas** del cronómetro original: alejarse 5 m para rearmar, regresar a menos de 2 m, completar al menos 20 s y 80 m estimados, y conservar una orientación compatible. Comienza a medir cuando detecta un desplazamiento inicial de 0.4 m.
 - Cada terminal genera un CSV en el directorio de ejecución: `sepang_lap_results_ego_YYYYMMDD_HHMMSS.csv` y `sepang_lap_results_opp_YYYYMMDD_HHMMSS.csv`. Contienen vuelta, duración, mejor tiempo, tiempo total y distancia estimada.
 - La telemetría muestra `ActualSpeed`, `CommandSpeed`, `TargetSpeed`, `PathClear`, `Lookahead`, `Steering`, coordenadas y avisos `PASS START`, `PASS WAIT`, `PASS ABORT` y `PASS COMPLETE`.
