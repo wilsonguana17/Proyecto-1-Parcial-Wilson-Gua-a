@@ -1,9 +1,11 @@
-# 🏎️ F1TENTH Sepang | Follow the Gap reactivo V3.1
+# 🏎️ F1TENTH Sepang | Follow the Gap reactivo — Partes 1 y 2
 
 [English](README.md) · **Español**  
 **ROS 2 Humble · Ubuntu 22.04 · LiDAR · Dirección Ackermann**
 
-Controlador reactivo para recorrer el circuito **Sepang** en el simulador F1TENTH, **sin una trayectoria predefinida**. Incluye un **cronómetro de 10 vueltas**, el mapa de Sepang y un script de configuración. El controlador decide hacia dónde conducir usando el LiDAR; la odometría permite supervisar el movimiento del vehículo.
+Este repositorio reúne la **parte 1 (un vehículo con Follow the Gap)** y la **parte 2 (cinco obstáculos y adelantamiento entre dos vehículos)** en Sepang, **sin una trayectoria global predefinida**. Incluye un **cronómetro de 10 vueltas**, el mapa de Sepang y un script de configuración. El controlador decide hacia dónde conducir usando el LiDAR; la odometría permite supervisar el movimiento del vehículo.
+
+**Contenido:** [Parte 1 — controlador original](#-cómo-funciona-follow-the-gap) · [Parte 2 — competencia con V3.9](#-parte-2--cinco-obstáculos-estáticos-y-un-oponente-dinámico)
 
 ## 🎥 Demostración de 10 vueltas
 
@@ -248,3 +250,170 @@ El controlador registra etiquetas en inglés como `ActualSpeed`, `CommandSpeed`,
 - **Conteo incorrecto:** inicia el cronómetro antes de mover el carro y evita reinicios o teletransportes en medio de la prueba.
 
 **Referencias:** [F1TENTH Gym](https://github.com/f1tenth/f1tenth_gym) · [F1TENTH Gym ROS](https://github.com/f1tenth/f1tenth_gym_ros) · [Entorno ROS 2 Humble](https://github.com/widegonz/F1Tenth-Repository). El mapa Sepang proviene de los archivos de mapas suministrados para el proyecto; conviene verificar sus condiciones de redistribución. El controlador se diseñó para **simulación**, no está validado para un vehículo físico.
+
+---
+
+# 🏁 Parte 2 — Cinco obstáculos estáticos y un oponente dinámico
+
+**Controlador definitivo de competencia: [Follow the Gap V3.9](controllers/gap_follow_sepang_v39.py).**
+Los dos vehículos ejecutan **el mismo algoritmo Python**: únicamente cambian los tópicos ROS asociados y el valor configurado de velocidad máxima. En esta sección se documenta la versión final, no las pruebas intermedias.
+
+## 🎯 Pruebas y resultados observados
+
+| Prueba | Configuración | Resultado reportado |
+|---|---|---|
+| Evasión de obstáculos | Sepang con cinco obstáculos dibujados en el mapa de ocupación | 10 vueltas consecutivas sin colisión |
+| Oponente dinámico | Mismo mapa con cinco obstáculos y dos carros autónomos; oponente inicialmente ~5 m adelante | 10 vueltas para cada vehículo y **un adelantamiento exitoso**, sin colisión |
+
+Estos resultados fueron comunicados por el autor del proyecto. Se pueden adjuntar los CSV de cada vuelta y un video del adelantamiento en `results/` como evidencias. **Aquí no se atribuyen tiempos exactos a la prueba final de V3.9 porque no se proporcionaron esos registros.** El contador no detecta colisiones automáticamente. El enunciado exige que el robot adicional sea rebasado durante la carrera, sin especificar un número mínimo de rebases adicionales.
+
+## 🧠 Enfoque reactivo: Follow the Gap V3.9
+
+El controlador toma decisiones locales a partir de sus sensores; no sigue una trayectoria global predefinida:
+
+1. **Preprocesamiento LiDAR:** `preprocess_lidar()` utiliza los 180° frontales del tópico `/scan`, maneja las lecturas inválidas, limita el alcance y emplea un mínimo local de tres rayos para conservar los bordes de los obstáculos.
+2. **Detección de gaps:** `choose_gap()` identifica regiones consecutivas libres dentro de ±65°. La anticipación depende de la velocidad: `lookahead_base + lookahead_gain × actual_speed`, con máximo de 12 m. Una burbuja local desaconseja dirigirse hacia obstáculos frontales sobresalientes.
+3. **Dirección y verificación de pasillos:** `refine_steering()` compara otras direcciones si la trayectoria inicial es demasiado corta. `path_clearance()` estima el espacio libre sobre un arco de Ackermann y revisa centro y bordes laterales del vehículo.
+4. **Velocidad adaptativa:** el comando se limita por velocidad máxima, dirección, aceleración lateral y distancia libre de la trayectoria. También se limita la rapidez de aceleración y frenado. **Configurar 12 m/s no implica alcanzar continuamente esa velocidad real.**
+5. **Adelantamiento reactivo:** `opp_callback()` recibe la odometría del oponente. `_relative()` estima su posición relativa; `_overtake()` compara corredores candidatos a ambos lados y activa `OVERTAKE` únicamente si encuentra una posibilidad de paso. `_pass_path()` evalúa trayectorias laterales y estima la posición futura del rival. `_filtered()` separa aproximadamente sus retornos LiDAR de los obstáculos estáticos, manteniendo una verificación dinámica independiente. Una vez que el rival queda atrás, regresa al modo `NORMAL`.
+6. **Publicación:** `scan_callback()` envía `AckermannDriveStamped` al tópico de conducción correspondiente.
+
+**Sensores utilizados:** la evasión de paredes y obstáculos se basa en LiDAR y odometría propia. Para reconocer al rival y planificar el adelantamiento, **también se utiliza su odometría publicada por el simulador**. Por tanto, no es un rastreador de oponentes exclusivamente basado en LiDAR. Las verificaciones de corredor son aproximaciones geométricas, no garantías formales de ausencia de choque.
+
+### Organización del código y tópicos ROS
+
+| Archivo | Función |
+|---|---|
+| [`controllers/gap_follow_sepang_v39.py`](controllers/gap_follow_sepang_v39.py) | Controlador final de la parte 2: navegación reactiva, evasión, velocidad adaptativa y adelantamiento |
+| [`timing/lap_timer_sepang_dual.py`](timing/lap_timer_sepang_dual.py) | Contador de 10 vueltas para cada carro: `vehicle:=ego` o `vehicle:=opp` |
+| [`scripts/configure_sepang_part2.py`](scripts/configure_sepang_part2.py) | Configura el mapa, `num_agent: 2` y las posiciones iniciales |
+| [`maps/Sepang_5obs_map.yaml`](maps/Sepang_5obs_map.yaml) | Metadatos del mapa; se refiere a `Sepang_5obs_map.png` |
+| `maps/Sepang_5obs_map.png` | **Pendiente de incorporar:** PNG definitivo editado en GIMP, copiado del entorno local de Ubuntu |
+| `results/` | Evidencias opcionales (archivos CSV, capturas y enlaces a videos) |
+| [`controllers/gap_follow_sepang_v31_en.py`](controllers/gap_follow_sepang_v31_en.py) | Controlador original de la parte 1, conservado |
+| [`timing/lap_timer_sepang.py`](timing/lap_timer_sepang.py) | Contador original de la parte 1, conservado |
+
+Cada carro dispone de tópicos independientes:
+
+| Señal | Robot principal | Oponente |
+|---|---|---|
+| LiDAR | `/scan` | `/opp_scan` |
+| Odometría propia | `/ego_racecar/odom` | `/opp_racecar/odom` |
+| Odometría del otro robot | `/ego_racecar/opp_odom` | `/opp_racecar/opp_odom` |
+| Comandos de movimiento | `/drive` | `/opp_drive` |
+
+## ⚙️ Preparación de la parte 2
+
+Primero sigue los requisitos de instalación de ROS 2 Humble y F1Tenth indicados en la **parte 1** de este README. El simulador sigue siendo una **dependencia externa**, aquí ubicada en `~/F1Tenth-Repository`.
+
+**Mapa definitivo necesario:** el PNG que contiene los cinco obstáculos es un archivo propio creado en GIMP. Debemos copiar **esa imagen exacta** al repositorio en `maps/Sepang_5obs_map.png` y subirla con el código. Una captura de RViz no sustituye al archivo de ocupación. El YAML conserva la resolución original (0.05944 m/píxel) y el mismo origen.
+
+Si ya está guardado el mapa final en el simulador del Ubuntu utilizado en el proyecto:
+
+~~~bash
+cd ~/Proyecto-1-Parcial-Wilson-Gua-a
+cp ~/F1Tenth-Repository/src/f1tenth_gym_ros/maps/Sepang_5obs_map.png maps/
+~~~
+
+Cuando el PNG exista en la carpeta `maps/`, configura el simulador:
+
+~~~bash
+cd ~/Proyecto-1-Parcial-Wilson-Gua-a
+python3 scripts/configure_sepang_part2.py --workspace ~/F1Tenth-Repository
+
+cd ~/F1Tenth-Repository
+source /opt/ros/humble/setup.bash
+colcon build --symlink-install
+source install/setup.bash
+~~~
+
+El nuevo script respalda `sim.yaml` y establece:
+
+~~~yaml
+map_path: '/home/wilson/F1Tenth-Repository/src/f1tenth_gym_ros/maps/Sepang_5obs_map'
+map_img_ext: '.png'
+num_agent: 2
+sx: -14.14
+sy: -1.14
+stheta: 0.08
+sx1: -9.16
+sy1: -0.74
+stheta1: 0.08
+~~~
+
+La ruta anterior es un **ejemplo** del equipo del autor; el script utiliza la ruta `--workspace` recibida para otros equipos. Los centros iniciales quedan separados aproximadamente 5 m según su rumbo; **verifica en RViz que ambos estén dentro de la pista y lejos de los obstáculos**. No ejecutes `configure_sepang.py` de la parte 1 en esta prueba: volvería a establecer un solo vehículo.
+
+## 🚀 Ejecución completa (cinco terminales)
+
+**Terminal 1 — Simulador:**
+
+~~~bash
+cd ~/F1Tenth-Repository
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch f1tenth_gym_ros gym_bridge_launch.py
+~~~
+
+Ejecuta **ambos contadores antes de los controladores**, con los carros detenidos.
+
+**Terminal 2 — Cronómetro del principal:**
+
+~~~bash
+cd ~/Proyecto-1-Parcial-Wilson-Gua-a
+source /opt/ros/humble/setup.bash
+source ~/F1Tenth-Repository/install/setup.bash
+python3 timing/lap_timer_sepang_dual.py --ros-args -r __node:=lap_timer_ego -p vehicle:=ego
+~~~
+
+**Terminal 3 — Cronómetro del oponente:**
+
+~~~bash
+cd ~/Proyecto-1-Parcial-Wilson-Gua-a
+source /opt/ros/humble/setup.bash
+source ~/F1Tenth-Repository/install/setup.bash
+python3 timing/lap_timer_sepang_dual.py --ros-args -r __node:=lap_timer_opponent -p vehicle:=opp
+~~~
+
+**Terminal 4 — Oponente, V3.9 a máximo 6 m/s:**
+
+~~~bash
+cd ~/Proyecto-1-Parcial-Wilson-Gua-a
+source /opt/ros/humble/setup.bash
+source ~/F1Tenth-Repository/install/setup.bash
+python3 controllers/gap_follow_sepang_v39.py --ros-args \
+  -r __node:=controller_opponent \
+  -r /scan:=/opp_scan \
+  -r /ego_racecar/odom:=/opp_racecar/odom \
+  -r /ego_racecar/opp_odom:=/opp_racecar/opp_odom \
+  -r /drive:=/opp_drive \
+  -p max_speed:=6.0 -p accel_limit:=5.0
+~~~
+
+**Terminal 5 — Principal, el mismo V3.9 a máximo 12 m/s:**
+
+~~~bash
+cd ~/Proyecto-1-Parcial-Wilson-Gua-a
+source /opt/ros/humble/setup.bash
+source ~/F1Tenth-Repository/install/setup.bash
+python3 controllers/gap_follow_sepang_v39.py --ros-args \
+  -r __node:=controller_ego \
+  -p max_speed:=12.0 -p accel_limit:=5.0
+~~~
+
+Con `num_agent: 2`, esta versión del simulador comienza a avanzar físicamente **cuando ambos tópicos de conducción reciben comandos**. Por ello, el segundo carro puede permanecer quieto hasta que se ejecute el controlador principal. No ejecutes dos controladores sobre el mismo tópico `/drive`.
+
+### Prueba independiente de cinco obstáculos
+
+Para evaluar únicamente la primera prueba de la parte 2, conserva `Sepang_5obs_map`, cambia `num_agent: 1` en `sim.yaml`, recompila si corresponde y reinicia. Ejecuta un único V3.9 con los tópicos del vehículo principal y un cronómetro de diez vueltas. Restablece `num_agent: 2` para la competencia con oponente.
+
+## ⏱️ Contadores, evidencias y problemas frecuentes
+
+- `lap_timer_sepang_dual.py` aplica los **mismos criterios de 10 vueltas** del cronómetro original: alejarse 5 m para rearmar, regresar a menos de 2 m, completar al menos 20 s y 80 m estimados, y conservar una orientación compatible. Comienza a medir cuando detecta un desplazamiento inicial de 0.4 m.
+- Cada terminal genera un CSV en el directorio de ejecución: `sepang_lap_results_ego_YYYYMMDD_HHMMSS.csv` y `sepang_lap_results_opp_YYYYMMDD_HHMMSS.csv`. Contienen vuelta, duración, mejor tiempo, tiempo total y distancia estimada.
+- La telemetría muestra `ActualSpeed`, `CommandSpeed`, `TargetSpeed`, `PathClear`, `Lookahead`, `Steering`, coordenadas y avisos `PASS START`, `PASS WAIT`, `PASS ABORT` y `PASS COMPLETE`.
+- **El mensaje `PASS COMPLETE` no demuestra por sí solo un adelantamiento seguro.** Es importante grabar RViz para confirmar que ambos cambian de posición sin contacto. Los contadores no identifican colisiones ni detienen los carros.
+- **Si los vehículos no avanzan**, verifica `num_agent: 2`, los dos nodos de control y los tópicos `/drive` y `/opp_drive`. Utiliza `ros2 topic list`.
+- **Si aparece el mapa incorrecto**, comprueba `map_path`, la correspondencia de los nombres PNG/YAML, la copia del mapa y el reinicio del simulador.
+- **Si se cuentan mal las vueltas**, reinicia simulador y contadores con los dos vehículos quietos; evita teletransportarlos durante el cronometraje.
+
+**Alcance:** proyecto validado en simulación F1Tenth; no constituye un controlador probado en un vehículo físico. La demostración original de la parte 1 se mantiene arriba.
