@@ -298,7 +298,12 @@ Both cars ran **Follow the Gap V3.9** on the same Sepang track with five static 
 | Fastest lap number | 6 | 6 |
 | **Total time (10 laps)** | **847.96 s** | **944.78 s** |
 
-The main car finished its ten laps **96.82 s faster** (difference between the two timer totals). The times above were transcribed from the provided screenshot of the two lap-counter terminals: `sepang_lap_results_ego_20261122_160532.csv` and `sepang_lap_results_opp_20261122_160552.csv` were the CSV filenames shown by those terminals, but the CSV files themselves have not been uploaded to this repository.
+The main car completed its ten laps **96.82 s faster** (difference between the two timer totals). The exact results have been verified against the **original 10-lap CSV logs**, now available in this repository:
+
+- **Ego / main car:** [`results/sepang_lap_results_ego_20261122_160532.csv`](results/sepang_lap_results_ego_20261122_160532.csv) — best lap **81.239 s** (lap 6), total **847.960 s**.
+- **Opponent:** [`results/sepang_lap_results_opp_20261122_160552.csv`](results/sepang_lap_results_opp_20261122_160552.csv) — best lap **93.431 s** (lap 6), total **944.780 s**.
+
+The summary table above rounds the original values to two decimal places for readability.
 
 **Validation scope:** The two counters each reported `FINISH 10/10`. The author reported no collisions and one successful overtake. The lap timers measure laps and elapsed time but do **not** independently detect collisions or verify overtaking; the Part 2 video above supplies visual context. The assignment requires overtaking the additional robot during the race, not multiple overtakes.
 
