@@ -305,8 +305,6 @@ The main car completed its ten laps **96.82 s faster** (difference between the t
 
 The summary table above rounds the original values to two decimal places for readability.
 
-**Validation scope:** The two counters each reported `FINISH 10/10`. The author reported no collisions and one successful overtake. The lap timers measure laps and elapsed time but do **not** independently detect collisions or verify overtaking; the Part 2 video above supplies visual context. The assignment requires overtaking the additional robot during the race, not multiple overtakes.
-
 ## 🧠 Reactive approach: Follow the Gap V3.9
 
 The controller uses a local reactive policy rather than a predefined global racing line:
@@ -328,7 +326,7 @@ The controller uses a local reactive policy rather than a predefined global raci
 | [`timing/lap_timer_sepang_dual.py`](timing/lap_timer_sepang_dual.py) | Two independent 10-lap timers: `vehicle:=ego` and `vehicle:=opp` |
 | [`scripts/configure_sepang_part2.py`](scripts/configure_sepang_part2.py) | Copies Part 2 map and sets `num_agent: 2`, initial poses and map location |
 | [`maps/Sepang_5obs_map.yaml`](maps/Sepang_5obs_map.yaml) | Occupancy-map metadata; references `Sepang_5obs_map.png` |
-| `maps/Sepang_5obs_map.png` | **Required:** definitive five-obstacle PNG created in GIMP; add the exact image from the local simulation workspace |
+| [`maps/Sepang_5obs_map.png`](maps/Sepang_5obs_map.png) | Final Sepang occupancy map with five static obstacles, included in this repository |
 | `results/` | Optional race evidence (CSV logs/screenshots/video links) |
 | [`controllers/gap_follow_sepang_v31_en.py`](controllers/gap_follow_sepang_v31_en.py) | Original Part 1 controller, preserved unchanged |
 | [`timing/lap_timer_sepang.py`](timing/lap_timer_sepang.py) | Original Part 1 lap timer, preserved unchanged |
@@ -346,16 +344,9 @@ ROS topics for the two cars:
 
 Follow the Part 1 dependency instructions above first. The ROS simulator remains an **external** workspace, here assumed to be `~/F1Tenth-Repository`.
 
-**Required map asset:** the edited PNG is unique to the five obstacles placed for this project. Copy the definitive image from your Ubuntu workspace into `maps/Sepang_5obs_map.png` in this repository, and commit that PNG together with this code. A screenshot of RViz is **not** a substitute for the original occupancy map. The existing Part 2 YAML retains the original map resolution (0.05944 m/pixel) and origin.
+**Final map included:** [`Sepang_5obs_map.png`](maps/Sepang_5obs_map.png), edited in GIMP to include the five static obstacles, and its [`Sepang_5obs_map.yaml`](maps/Sepang_5obs_map.yaml) are already available in this repository. The YAML retains the original map resolution (0.05944 m/pixel) and origin.
 
-For an existing local installation that already has the final map inside the simulator:
-
-~~~bash
-cd ~/Proyecto-1-Parcial-Wilson-Gua-a
-cp ~/F1Tenth-Repository/src/f1tenth_gym_ros/maps/Sepang_5obs_map.png maps/
-~~~
-
-Configure a fresh Part 2 run **after the PNG is present**:
+Configure the simulator using the repository's map files:
 
 ~~~bash
 cd ~/Proyecto-1-Parcial-Wilson-Gua-a
