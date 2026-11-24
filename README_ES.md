@@ -305,8 +305,6 @@ El vehículo principal completó sus diez vueltas **96.82 s antes** que el opone
 
 La tabla anterior redondea los valores originales a dos decimales para facilitar la lectura.
 
-**Alcance de la validación:** Ambos contadores mostraron `FINISH 10/10`. El autor confirmó que no hubo colisiones y que se realizó un adelantamiento. Los contadores registran vueltas y tiempos, pero **no detectan por sí solos colisiones ni adelantamientos**; el video de la parte 2 permite observar la competencia. El enunciado solicita rebasar al robot adicional durante la carrera, sin exigir múltiples adelantamientos.
-
 ## 🧠 Enfoque reactivo: Follow the Gap V3.9
 
 El controlador toma decisiones locales a partir de sus sensores; no sigue una trayectoria global predefinida:
@@ -328,7 +326,7 @@ El controlador toma decisiones locales a partir de sus sensores; no sigue una tr
 | [`timing/lap_timer_sepang_dual.py`](timing/lap_timer_sepang_dual.py) | Contador de 10 vueltas para cada carro: `vehicle:=ego` o `vehicle:=opp` |
 | [`scripts/configure_sepang_part2.py`](scripts/configure_sepang_part2.py) | Configura el mapa, `num_agent: 2` y las posiciones iniciales |
 | [`maps/Sepang_5obs_map.yaml`](maps/Sepang_5obs_map.yaml) | Metadatos del mapa; se refiere a `Sepang_5obs_map.png` |
-| `maps/Sepang_5obs_map.png` | **Pendiente de incorporar:** PNG definitivo editado en GIMP, copiado del entorno local de Ubuntu |
+| [`maps/Sepang_5obs_map.png`](maps/Sepang_5obs_map.png) | Mapa definitivo de Sepang con los cinco obstáculos estáticos, incluido en el repositorio |
 | `results/` | Evidencias opcionales (archivos CSV, capturas y enlaces a videos) |
 | [`controllers/gap_follow_sepang_v31_en.py`](controllers/gap_follow_sepang_v31_en.py) | Controlador original de la parte 1, conservado |
 | [`timing/lap_timer_sepang.py`](timing/lap_timer_sepang.py) | Contador original de la parte 1, conservado |
@@ -346,16 +344,9 @@ Cada carro dispone de tópicos independientes:
 
 Primero sigue los requisitos de instalación de ROS 2 Humble y F1Tenth indicados en la **parte 1** de este README. El simulador sigue siendo una **dependencia externa**, aquí ubicada en `~/F1Tenth-Repository`.
 
-**Mapa definitivo necesario:** el PNG que contiene los cinco obstáculos es un archivo propio creado en GIMP. Debemos copiar **esa imagen exacta** al repositorio en `maps/Sepang_5obs_map.png` y subirla con el código. Una captura de RViz no sustituye al archivo de ocupación. El YAML conserva la resolución original (0.05944 m/píxel) y el mismo origen.
+**Mapa definitivo incluido:** el archivo [`Sepang_5obs_map.png`](maps/Sepang_5obs_map.png), editado en GIMP con los cinco obstáculos, y su [`Sepang_5obs_map.yaml`](maps/Sepang_5obs_map.yaml) ya están disponibles en este repositorio. El YAML conserva la resolución original (0.05944 m/píxel) y el mismo origen.
 
-Si ya está guardado el mapa final en el simulador del Ubuntu utilizado en el proyecto:
-
-~~~bash
-cd ~/Proyecto-1-Parcial-Wilson-Gua-a
-cp ~/F1Tenth-Repository/src/f1tenth_gym_ros/maps/Sepang_5obs_map.png maps/
-~~~
-
-Cuando el PNG exista en la carpeta `maps/`, configura el simulador:
+Para configurar el simulador desde los archivos del repositorio, ejecuta:
 
 ~~~bash
 cd ~/Proyecto-1-Parcial-Wilson-Gua-a
