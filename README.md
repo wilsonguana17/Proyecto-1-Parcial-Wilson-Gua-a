@@ -7,6 +7,21 @@ This repository contains **Part 1 (single-car Follow the Gap)** and **Part 2 (fi
 
 **Contents:** [Part 1 — original controller](#-how-follow-the-gap-works) · [Part 2 — competition controller V3.9](#-part-2--five-static-obstacles-and-one-dynamic-opponent)
 
+## 📦 ROSBAG and CSV datasets (Google Drive)
+
+The original ROS 2 recordings and exported CSV files for both experiments are stored in Google Drive, since the LiDAR datasets are too large for conventional Git hosting.
+
+**[📂 Open the complete F1TENTH ROSBAG and CSV dataset](https://drive.google.com/drive/folders/1CUjisEyBILl4In-C4Yy8_Xs24bgN_pDS)**
+
+| Experiment | ROSBAG recordings | CSV exports |
+|---|---|---|
+| **Part 1 — original Sepang, no obstacles** | [Open ROSBAG folder](https://drive.google.com/drive/folders/1hCO6fNXVfoJPA19a9S6TPIwIv9XBfzCJ) | [Open CSV folder](https://drive.google.com/drive/folders/1tlukOU190m4xqttDeGW7VTc2KgRsNCzc) |
+| **Part 2 — five obstacles, two vehicles** | [Open ROSBAG folder](https://drive.google.com/drive/folders/11R60ocxo97vMolEIvtGHnTb9iTQGmV-x) | [Open CSV folder](https://drive.google.com/drive/folders/1LdSyq7ZuIHasoXsMaqI2xtHCLeXO5xvq) |
+
+**Topics:** Part 1 records `/scan`, `/ego_racecar/odom`, and `/drive`. Part 2 also records the opponent's `/opp_scan`, `/opp_racecar/odom`, and `/opp_drive`.
+
+**Uploading:** these Drive links are permanent folder references and automatically display additional files as their uploads finish. **Access:** the owner must enable `Anyone with the link → Viewer` for the main folder if reviewers should access the data without requesting permission.
+
 ## 🎥 10-lap demonstration
 
 [![Watch the 10-lap Sepang demonstration](https://img.youtube.com/vi/9m-QhL65yLw/hqdefault.jpg)](https://youtu.be/9m-QhL65yLw)
