@@ -264,19 +264,19 @@ The controller logs English fields such as `ActualSpeed`, `CommandSpeed`, `Targe
 **Final competition controller: [Follow the Gap V3.9](controllers/gap_follow_sepang_v39.py).**
 Both cars run **the same Python algorithm**; only ROS topic remappings and the maximum speed setting differ. This section documents the final controller, not the intermediate experiments.
 
-## 🎥 Part 2 — Competition demonstration
+## 🎥 Part 2 — Competition videos
 
-[![Watch the Part 2 F1TENTH Sepang competition video](https://img.youtube.com/vi/_IGRx_2CJ-s/hqdefault.jpg)](https://youtu.be/_IGRx_2CJ-s)
+### ✂️ Edited demonstration
 
-**[▶ Watch the Part 2 video on YouTube](https://youtu.be/_IGRx_2CJ-s)** — Click the thumbnail to open the video.
+[![Watch the edited Part 2 F1TENTH Sepang video](https://img.youtube.com/vi/JS3bR9aOZVI/hqdefault.jpg)](https://youtu.be/JS3bR9aOZVI)
 
-### 🎬 Original unedited recording — Part 2 (Google Drive)
+**[▶ Watch the edited Part 2 demonstration on YouTube](https://youtu.be/JS3bR9aOZVI)** — Click the thumbnail to open the video.
 
-[![Watch the original unedited Part 2 recording on Google Drive](https://drive.google.com/thumbnail?id=1qDRfRShxvAR081CvCkMgt6b2JzihsOHV&sz=w640)](https://drive.google.com/file/d/1qDRfRShxvAR081CvCkMgt6b2JzihsOHV/view?usp=sharing)
+### 🎬 Original unedited recording
 
-**[▶ Watch the complete original, unedited Part 2 recording on Google Drive](https://drive.google.com/file/d/1qDRfRShxvAR081CvCkMgt6b2JzihsOHV/view?usp=sharing)** — Click the preview or link to open the recording.
+[![Watch the original unedited Part 2 F1TENTH Sepang video](https://img.youtube.com/vi/p4yZi22uheM/hqdefault.jpg)](https://youtu.be/p4yZi22uheM)
 
-*If you cannot open the video, the file owner needs to enable **Anyone with the link → Viewer** in Google Drive sharing settings.*
+**[▶ Watch the full original unedited Part 2 video on YouTube](https://youtu.be/p4yZi22uheM)** — Click the thumbnail to open the recording.
 
 ## 🎯 Competition tasks and observed outcome
 
