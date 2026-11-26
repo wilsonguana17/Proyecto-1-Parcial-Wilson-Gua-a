@@ -20,7 +20,6 @@ Las grabaciones originales de ROS 2 y los archivos CSV de ambas pruebas están o
 
 **Tópicos:** en la parte 1 se registran `/scan`, `/ego_racecar/odom` y `/drive`. En la parte 2 también se registran `/opp_scan`, `/opp_racecar/odom` y `/opp_drive` del segundo vehículo.
 
-**Subidas:** los enlaces apuntan a las carpetas y muestran automáticamente los nuevos archivos conforme termina su carga. **Acceso:** si el profesor debe ingresar sin solicitar permiso, el propietario debe configurar la carpeta principal como `Cualquier persona con el enlace → Lector`.
 
 ## 🎥 Demostración de 10 vueltas
 
