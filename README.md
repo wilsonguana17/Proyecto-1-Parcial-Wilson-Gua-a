@@ -20,7 +20,6 @@ The original ROS 2 recordings and exported CSV files for both experiments are st
 
 **Topics:** Part 1 records `/scan`, `/ego_racecar/odom`, and `/drive`. Part 2 also records the opponent's `/opp_scan`, `/opp_racecar/odom`, and `/opp_drive`.
 
-**Uploading:** these Drive links are permanent folder references and automatically display additional files as their uploads finish. **Access:** the owner must enable `Anyone with the link → Viewer` for the main folder if reviewers should access the data without requesting permission.
 
 ## 🎥 10-lap demonstration
 
