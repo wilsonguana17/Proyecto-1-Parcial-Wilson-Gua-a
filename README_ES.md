@@ -264,19 +264,19 @@ El controlador registra etiquetas en inglés como `ActualSpeed`, `CommandSpeed`,
 **Controlador definitivo de competencia: [Follow the Gap V3.9](controllers/gap_follow_sepang_v39.py).**
 Los dos vehículos ejecutan **el mismo algoritmo Python**: únicamente cambian los tópicos ROS asociados y el valor configurado de velocidad máxima. En esta sección se documenta la versión final, no las pruebas intermedias.
 
-## 🎥 Parte 2 — Video de la competencia
+## 🎥 Parte 2 — Videos de la competencia
 
-[![Ver el video de la parte 2 en F1TENTH Sepang](https://img.youtube.com/vi/_IGRx_2CJ-s/hqdefault.jpg)](https://youtu.be/_IGRx_2CJ-s)
+### ✂️ Demostración editada
 
-**[▶ Ver el video de la parte 2 en YouTube](https://youtu.be/_IGRx_2CJ-s)** — Haz clic en la miniatura para abrir el video.
+[![Ver el video editado de la parte 2 de F1Tenth Sepang](https://img.youtube.com/vi/JS3bR9aOZVI/hqdefault.jpg)](https://youtu.be/JS3bR9aOZVI)
 
-### 🎬 Video original sin edición — Parte 2 (Google Drive)
+**[▶ Ver video editado de la parte 2 en YouTube](https://youtu.be/JS3bR9aOZVI)** — Haz clic en la miniatura para abrirlo.
 
-[![Ver el video original sin edición de la parte 2 en Google Drive](https://drive.google.com/thumbnail?id=1qDRfRShxvAR081CvCkMgt6b2JzihsOHV&sz=w640)](https://drive.google.com/file/d/1qDRfRShxvAR081CvCkMgt6b2JzihsOHV/view?usp=sharing)
+### 🎬 Grabación original sin edición
 
-**[▶ Ver grabación completa y original sin edición de la parte 2 en Google Drive](https://drive.google.com/file/d/1qDRfRShxvAR081CvCkMgt6b2JzihsOHV/view?usp=sharing)** — Haz clic en la miniatura o en el enlace para abrir el video.
+[![Ver el video original sin edición de la parte 2 de F1Tenth Sepang](https://img.youtube.com/vi/p4yZi22uheM/hqdefault.jpg)](https://youtu.be/p4yZi22uheM)
 
-*Si el video no se puede abrir, el propietario debe configurar el archivo en Google Drive como **Cualquier persona con el enlace → Lector**.*
+**[▶ Ver video original completo sin edición en YouTube](https://youtu.be/p4yZi22uheM)** — Haz clic en la miniatura para abrir la grabación.
 
 ## 🎯 Pruebas y resultados observados
 
